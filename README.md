@@ -3,6 +3,8 @@
 A Deno-based automation tool for managing version numbers across multiple WoW addon `.toc` files. This tool helps maintain version consistency across
 all your addons and integrates with Git for automated releases.
 
+> **⚠️ Warning**: This tool has been developed and tested on Windows. While it should work on other operating systems, some features (particularly Git integration) may behave differently on Linux or macOS. Please report any issues you encounter on non-Windows systems.
+
 ## Prerequisites
 
 - [Deno](https://deno.land/) runtime installed
