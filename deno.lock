@@ -1,0 +1,16 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/semver@^1.0.5": "1.0.5"
+  },
+  "jsr": {
+    "@std/semver@1.0.5": {
+      "integrity": "529f79e83705714c105ad0ba55bec0f9da0f24d2f726b6cc1c15e505cc2c0624"
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@std/semver@^1.0.5"
+    ]
+  }
+}

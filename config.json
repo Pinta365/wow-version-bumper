@@ -1,0 +1,9 @@
+{
+    "whitelistedAddons": [
+        "Broker_TinyFriends",
+        "Broker_TinyGuild",
+        "KeystoneRoulette",
+        "EZTrade"
+    ],
+    "addonsDirectory": "E:/World of Warcraft/_retail_/Interface/AddOns"
+}
