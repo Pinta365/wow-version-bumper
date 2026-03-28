@@ -3,7 +3,8 @@
         "Broker_TinyFriends",
         "Broker_TinyGuild",
         "KeystoneRoulette",
-        "EZTrade"
+        "PintaGroupFinder",
+        "PintaWorldQuests"
     ],
-    "addonsDirectory": "E:/World of Warcraft/_retail_/Interface/AddOns"
+    "addonsDirectory": "C:/World of Warcraft/_retail_/Interface/AddOns"
 }
