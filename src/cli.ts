@@ -32,6 +32,7 @@ export class CLI {
         console.log("  deno task bump [addon] --minor              - Bump specific addon minor version");
         console.log("  deno task bump [addon] --dry                - Dry run (no changes)");
         console.log("  deno task bump [addon] --verbose            - Verbose output");
+        console.log("  deno task bump patch|minor|major            - Bump current addon by bump type");
 
         console.log("\nExamples:");
         console.log("  deno task show");
@@ -44,6 +45,7 @@ export class CLI {
         console.log("  deno task bump YourAddonName --major --dry");
         console.log("  deno task bump YourAddonName --verbose");
         console.log("  deno task bump all --minor");
+        console.log("  deno task bump patch");
     }
 
     /**
@@ -53,6 +55,7 @@ export class CLI {
      * @returns Parsed version bump options
      */
     private parseBumpArgs(args: string[]): VersionBumpOptions {
+        const positionalArgs = args.filter((arg) => !arg.startsWith("--"));
         let newVersion: string;
         let targetAddon: string | undefined;
 
@@ -65,7 +68,14 @@ export class CLI {
             bumpType = "patch";
         }
 
-        if (args.length === 0) {
+        // Support shorthand: `bump patch`, `bump minor`, `bump major`.
+        const bumpTypeShorthand = positionalArgs[0];
+        if (["major", "minor", "patch"].includes(bumpTypeShorthand)) {
+            bumpType = bumpTypeShorthand as "major" | "minor" | "patch";
+            positionalArgs.shift();
+        }
+
+        if (positionalArgs.length === 0) {
             console.log(
                 "🔍 No version provided, auto-incrementing highest version...",
             );
@@ -77,26 +87,17 @@ export class CLI {
             newVersion = nextVersion;
             console.log(`📈 Auto-incrementing to: ${newVersion}`);
         } else {
-            if (/^\d+\.\d+\.\d+$/.test(args[0])) {
-                newVersion = args[0];
-                targetAddon = args[1] && !args[1].startsWith("--") ? args[1] : undefined;
-            } else if (args[0] === "all") {
+            if (/^\d+\.\d+\.\d+$/.test(positionalArgs[0])) {
+                newVersion = positionalArgs[0];
+                targetAddon = positionalArgs[1];
+            } else if (positionalArgs[0] === "all") {
                 console.log("🔍 Bumping all addons to individual versions...");
                 newVersion = "auto";
-            } else if (args[0].startsWith("--")) {
-                console.error(
-                    "❌ Error: No addon specified. Use 'all' to bump all addons or specify an addon name.",
-                );
-                console.log("\nExamples:");
-                console.log("  deno run main.ts bump all --major");
-                console.log("  deno run main.ts bump Broker_TinyFriends --major");
-                console.log("  deno run main.ts bump --major Broker_TinyFriends");
-                throw new Error("Invalid bump command arguments");
             } else {
-                targetAddon = args[0];
+                targetAddon = positionalArgs[0];
 
-                if (args.length >= 2 && /^\d+\.\d+\.\d+$/.test(args[1])) {
-                    newVersion = args[1];
+                if (positionalArgs.length >= 2 && /^\d+\.\d+\.\d+$/.test(positionalArgs[1])) {
+                    newVersion = positionalArgs[1];
                 } else {
                     console.log(
                         "🔍 No version provided for specific addon, auto-incrementing...",

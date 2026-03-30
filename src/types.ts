@@ -10,6 +10,8 @@ export interface TocFile {
     version: string;
     /** The name of the addon this TOC file belongs to */
     addonName: string;
+    /** Optional display name from `## Name:` in the TOC header */
+    tocName?: string;
 }
 
 /**
@@ -39,3 +41,10 @@ export interface Config {
     /** Directory containing the addon folders */
     addonsDirectory: string;
 }
+
+/**
+ * Runtime operating mode.
+ * - `config`: uses config.json whitelist/addons directory behavior
+ * - `local`: auto-discovers TOC files from the current working directory
+ */
+export type RuntimeMode = "config" | "local";

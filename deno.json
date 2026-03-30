@@ -1,19 +1,22 @@
 {
-    "name": "wow-version-bumper",
-    "version": "0.0.1",
-    "description": "WoW Addon Version Bumper - Manage version numbers across multiple .toc files",
-    "exports": "./main.ts",
+    "name": "@pinta365/toc-bumper",
+    "version": "0.1.0",
+    "description": "WoW Addon TOC Bumper - Manage version numbers across multiple .toc files",
+    "exports": {
+        ".": "./src/index.ts",
+        "./cli": "./main.ts"
+    },
     "fmt": {
         "lineWidth": 150,
         "indentWidth": 4
     },
     "tasks": {
-        "help": "deno run --allow-read --allow-write --allow-run main.ts",
-        "list": "deno run --allow-read main.ts list",
-        "whitelist": "deno run --allow-read main.ts whitelist",
-        "config": "deno run --allow-read main.ts config",
-        "show": "deno run --allow-read main.ts show",
-        "bump": "deno run --allow-read --allow-write --allow-run main.ts bump"
+        "help": "deno run --allow-read --allow-write --allow-run ./main.ts",
+        "list": "deno run --allow-read ./main.ts list",
+        "whitelist": "deno run --allow-read ./main.ts whitelist",
+        "config": "deno run --allow-read ./main.ts config",
+        "show": "deno run --allow-read ./main.ts show",
+        "bump": "deno run --allow-read --allow-write --allow-run ./main.ts bump"
     },
     "imports": {
         "@std/semver": "jsr:@std/semver@^1.0.5"

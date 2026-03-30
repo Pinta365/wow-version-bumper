@@ -1,4 +1,4 @@
-import type { Config } from "./types.ts";
+import type { Config, RuntimeMode } from "./types.ts";
 
 /**
  * Configuration manager for the version bumper.
@@ -7,10 +7,18 @@ import type { Config } from "./types.ts";
 export class ConfigManager {
     private config: Config;
     private verbose: boolean;
+    private mode: RuntimeMode;
+    private cwd: string;
 
     constructor(verbose: boolean = false) {
         this.verbose = verbose;
+        this.cwd = Deno.cwd();
         this.config = this.loadConfig();
+        this.mode = this.detectMode();
+
+        if (this.verbose) {
+            console.log(`⚙️  Runtime mode: ${this.mode}`);
+        }
     }
 
     /**
@@ -28,14 +36,54 @@ export class ConfigManager {
             }
             return config;
         } catch (error) {
-            console.warn(
-                `⚠️  Could not load config.json, using defaults: ${(error as Error).message}`,
-            );
+            if (this.verbose) {
+                console.warn(
+                    `⚠️  Could not load config.json, using local addon mode: ${(error as Error).message}`,
+                );
+            }
             return {
-                whitelistedAddons: [],
-                addonsDirectory: "./addons",
+                whitelistedAddons: [this.getCurrentAddonName()],
+                addonsDirectory: this.cwd,
             };
         }
+    }
+
+    /**
+     * Detects runtime mode based on whether config.json exists.
+     */
+    private detectMode(): RuntimeMode {
+        try {
+            const stat = Deno.statSync("config.json");
+            if (stat.isFile) {
+                return "config";
+            }
+        } catch {
+            // Fall through to local mode.
+        }
+        return "local";
+    }
+
+    /**
+     * Gets addon name fallback from current working directory.
+     */
+    private getCurrentAddonName(): string {
+        const normalized = this.cwd.replace(/\\/g, "/").replace(/\/$/, "");
+        const parts = normalized.split("/").filter(Boolean);
+        return parts.length > 0 ? parts[parts.length - 1] : "current-addon";
+    }
+
+    /**
+     * Gets the current runtime mode.
+     */
+    public getMode(): RuntimeMode {
+        return this.mode;
+    }
+
+    /**
+     * Returns true when running in addon-local auto-discovery mode.
+     */
+    public isLocalMode(): boolean {
+        return this.mode === "local";
     }
 
     /**
@@ -57,12 +105,28 @@ export class ConfigManager {
     }
 
     /**
+     * Resolves working directory for git operations.
+     */
+    public getWorkingDirectory(targetAddon?: string): string {
+        if (this.isLocalMode()) {
+            return this.cwd;
+        }
+        return targetAddon ? `${this.config.addonsDirectory}/${targetAddon}` : this.cwd;
+    }
+
+    /**
      * Displays the current whitelist of addons.
      *
      * Shows all addons that are currently whitelisted for processing,
      * along with the total count.
      */
     public showWhitelist(): void {
+        if (this.isLocalMode()) {
+            console.log("Whitelist is not used in local addon mode.");
+            console.log("TOC files are auto-discovered from the current directory.");
+            return;
+        }
+
         console.log("Whitelisted addons:");
         console.log("=".repeat(30));
         for (const addon of this.config.whitelistedAddons) {
@@ -80,10 +144,15 @@ export class ConfigManager {
     public showConfig(): void {
         console.log("Current Configuration:");
         console.log("=".repeat(30));
+        console.log(`⚙️  Mode: ${this.mode}`);
         console.log(`📁 Addons Directory: ${this.config.addonsDirectory}`);
-        console.log(`📋 Whitelisted Addons: ${this.config.whitelistedAddons.length}`);
-        for (const addon of this.config.whitelistedAddons) {
-            console.log(`  ✅ ${addon}`);
+        if (this.isLocalMode()) {
+            console.log("📋 Whitelist: auto (local mode)");
+        } else {
+            console.log(`📋 Whitelisted Addons: ${this.config.whitelistedAddons.length}`);
+            for (const addon of this.config.whitelistedAddons) {
+                console.log(`  ✅ ${addon}`);
+            }
         }
         console.log(`\n💡 To modify the whitelist, edit config.json`);
     }

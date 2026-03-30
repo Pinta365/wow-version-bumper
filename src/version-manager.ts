@@ -47,7 +47,7 @@ export class VersionManager {
         for (const [addonName, files] of addonGroups) {
             console.log(`\n📦 ${addonName}:`);
             for (const file of files) {
-                const relativePath = file.path.replace("./addons/", "");
+                const relativePath = this.toRelativePath(file.path);
                 console.log(`  ${relativePath}: ${file.version}`);
             }
 
@@ -126,5 +126,17 @@ export class VersionManager {
         }
 
         return nextVersion;
+    }
+
+    /**
+     * Converts an absolute or mixed path to a display path relative to cwd.
+     */
+    private toRelativePath(filePath: string): string {
+        const cwd = Deno.cwd().replace(/\\/g, "/");
+        const normalized = filePath.replace(/\\/g, "/");
+        if (normalized.startsWith(`${cwd}/`)) {
+            return normalized.slice(cwd.length + 1);
+        }
+        return normalized;
     }
 }

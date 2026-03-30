@@ -103,6 +103,13 @@ export class VersionBumper {
     }
 
     /**
+     * Returns true when running in local addon auto-discovery mode.
+     */
+    public isLocalMode(): boolean {
+        return this.configManager.isLocalMode();
+    }
+
+    /**
      * Performs version bumping operations on TOC files.
      *
      * Updates version numbers in TOC files and optionally creates git tags.
@@ -111,6 +118,16 @@ export class VersionBumper {
      * @param options - Configuration options for the version bump operation
      */
     public async bumpVersion(options: VersionBumpOptions): Promise<void> {
+        if (!options.targetAddon && this.isLocalMode()) {
+            const addonNames = [...new Set(this.tocManager.getTocFiles().map((file) => file.addonName))];
+            if (addonNames.length > 1) {
+                console.error("❌ Multiple addons detected in local mode.");
+                console.error(`   Found: ${addonNames.join(", ")}`);
+                console.error("   Specify a target addon explicitly: deno task bump <addon>");
+                return;
+            }
+        }
+
         if (options.targetAddon) {
             const filesToUpdate = this.tocManager.getTocFilesForAddon(options.targetAddon);
 
@@ -228,7 +245,7 @@ export class VersionBumper {
                 file.content,
                 options.newVersion,
             );
-            const relativePath = file.path.replace("./addons/", "");
+            const relativePath = this.toRelativePath(file.path);
 
             if (options.dryRun) {
                 console.log(
@@ -247,5 +264,17 @@ export class VersionBumper {
                 }
             }
         }
+    }
+
+    /**
+     * Converts a path to a human-friendly cwd-relative form.
+     */
+    private toRelativePath(filePath: string): string {
+        const cwd = Deno.cwd().replace(/\\/g, "/");
+        const normalized = filePath.replace(/\\/g, "/");
+        if (normalized.startsWith(`${cwd}/`)) {
+            return normalized.slice(cwd.length + 1);
+        }
+        return normalized;
     }
 }

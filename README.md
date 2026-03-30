@@ -1,4 +1,4 @@
-# WoW Addon Version Bumper
+# WoW Addon TOC Bumper
 
 A Deno-based automation tool for managing version numbers across multiple WoW addon `.toc` files. This tool helps maintain version consistency across
 all your addons and integrates with Git for automated releases.
@@ -11,16 +11,14 @@ all your addons and integrates with Git for automated releases.
 - WoW addons with separate Git repositories
 - WoW addons with `.toc` files containing `## Version: x.x.x` lines
 
-## Installation
+## Runtime Modes
 
-1. Clone this repository:
+The tool now supports two modes:
 
-```bash
-git clone https://github.com/Pinta365/wow-version-bumper
-cd wow-version-bumper
-```
+1. `config` mode: if `config.json` exists in the current working directory.
+2. `local` mode: if no `config.json` is found. TOC files are auto-discovered from the current directory.
 
-2. Configure your addons and directory in `config.json` (see Configuration section below for details).
+This keeps existing multi-addon workflows intact while making addon-local usage simple.
 
 ## Usage
 
@@ -84,6 +82,32 @@ deno task bump all --minor
 # Dry run - preview changes without writing files or git operations use the --dry flag
 ```
 
+## Addon-Local Setup (Recommended)
+
+In each addon repository, create a minimal `deno.json`:
+
+```json
+{
+    "tasks": {
+        "bump": "deno run --allow-read --allow-write --allow-run=git jsr:@pinta365/toc-bumper/cli bump",
+        "show": "deno run --allow-read --allow-run=git jsr:@pinta365/toc-bumper/cli show"
+    }
+}
+
+```
+
+Then run:
+
+```bash
+deno task bump patch
+```
+
+OR, just run the deno run command directly instead of defining them into deno tasks.
+
+In local mode, the CLI scans the current repository for `.toc` files and reads `## Version:` directly from those files.
+
+If no git repository is detected, file updates still happen and git commit/tag/push steps are skipped.
+
 ## Configuration
 
 Edit `config.json` to customize the tool:
@@ -99,6 +123,8 @@ Edit `config.json` to customize the tool:
 
 - `whitelistedAddons`: Array of addon names/folders to manage (only these addons will be processed)
 - `addonsDirectory`: Path to your WoW addons repository directory
+
+Configuration is optional in addon-local mode.
 
 ### TOC File Format
 

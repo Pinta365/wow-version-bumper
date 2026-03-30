@@ -41,7 +41,12 @@ export class GitManager {
         }
 
         try {
-            const workingDir = targetAddon ? `${this.configManager.getAddonsDirectory()}/${targetAddon}` : Deno.cwd();
+            const workingDir = this.configManager.getWorkingDirectory(targetAddon);
+
+            if (!(await this.hasGitRepository(workingDir))) {
+                console.log("ℹ️  No git repository detected. Skipping commit/tag/push steps.");
+                return;
+            }
 
             const status = await this.runCommandInDir(
                 "git status --porcelain",
@@ -67,6 +72,28 @@ export class GitManager {
             );
         } catch (error) {
             console.error(`❌ Git operations failed: ${(error as Error).message}`);
+        }
+    }
+
+    /**
+     * Checks whether a directory is inside a git repository.
+     */
+    private async hasGitRepository(workingDir: string): Promise<boolean> {
+        try {
+            const process = new Deno.Command("git", {
+                args: ["rev-parse", "--is-inside-work-tree"],
+                cwd: workingDir,
+                stdout: "piped",
+                stderr: "piped",
+            });
+            const { code, stdout } = await process.output();
+            if (code !== 0) {
+                return false;
+            }
+            const output = new TextDecoder().decode(stdout).trim().toLowerCase();
+            return output === "true";
+        } catch {
+            return false;
         }
     }
 
