@@ -15,7 +15,7 @@ export class CLI {
      * Shows the help information and usage examples.
      */
     private showHelp(): void {
-        console.log("WoW Addon Version Bumper");
+        console.log("WoW Addon TOC Bumper");
         console.log("=".repeat(40));
         console.log("\nAvailable Tasks:");
         console.log("  deno task help                              - Show this help information");
@@ -46,6 +46,7 @@ export class CLI {
         console.log("  deno task bump YourAddonName --verbose");
         console.log("  deno task bump all --minor");
         console.log("  deno task bump patch");
+        console.log("  deno task bump patch --dry");
     }
 
     /**

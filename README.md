@@ -3,7 +3,7 @@
 A Deno-based automation tool for managing version numbers across multiple WoW addon `.toc` files. This tool helps maintain version consistency across
 all your addons and integrates with Git for automated releases.
 
-> **⚠️ DISCLAMER**: This tool has been developed and tested on Windows. While it should work on other operating systems, some features (particularly Git integration) may behave differently on Linux or macOS. Please report any issues you encounter on non-Windows systems.
+> **⚠️ DISCLAIMER**: This tool has been developed and tested on Windows. While it should work on other operating systems, some features (particularly Git integration) may behave differently on Linux or macOS. Please report any issues you encounter on non-Windows systems.
 
 ## Prerequisites
 
@@ -21,6 +21,22 @@ The tool now supports two modes:
 This keeps existing multi-addon workflows intact while making addon-local usage simple.
 
 ## Usage
+
+### Recommended (JSR CLI, no local install)
+
+Run directly from your addon folder:
+
+```bash
+deno run --allow-read --allow-write --allow-run=git jsr:@pinta365/toc-bumper/cli bump patch
+```
+
+Read-only version overview:
+
+```bash
+deno run --allow-read --allow-run=git jsr:@pinta365/toc-bumper/cli show
+```
+
+You can append flags like `--dry`, `--verbose`, `--major`, or `--minor`.
 
 ### Available Tasks
 
@@ -61,6 +77,11 @@ deno task bump 1.2.3
 #### Automatic Semantic Version Bump
 
 ```bash
+# Bump current addon if running from a standalone addon folder (with minimal deno.json).
+deno task bump patch
+deno task bump minor
+deno task bump major
+
 # Bump specific addon (patch version)
 deno task bump YourAddonName
 
@@ -93,7 +114,6 @@ In each addon repository, create a minimal `deno.json`:
         "show": "deno run --allow-read --allow-run=git jsr:@pinta365/toc-bumper/cli show"
     }
 }
-
 ```
 
 Then run:
@@ -104,11 +124,18 @@ deno task bump patch
 
 OR, just run the deno run command directly instead of defining them into deno tasks.
 
+This is equivalent to running the JSR CLI command directly without defining tasks.
+
 In local mode, the CLI scans the current repository for `.toc` files and reads `## Version:` directly from those files.
 
 If no git repository is detected, file updates still happen and git commit/tag/push steps are skipped.
 
+For `show`, `--allow-run=git` lets discovery respect `.gitignore`. Without it, discovery falls back to recursive scanning.
+
 ## Configuration
+
+This started as a personal utility for my own addons, so some config examples and defaults may reflect that context.
+Replace addon names and paths with your own setup if cloning the repo.
 
 Edit `config.json` to customize the tool:
 
