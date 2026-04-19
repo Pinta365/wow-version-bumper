@@ -244,9 +244,12 @@ export class VersionBumper {
         }
 
         if (options.targetAddon) {
-            const filesToUpdate = this.tocManager.getTocFilesForAddon(options.targetAddon);
+            const filesToUpdate = this.tocManager
+                .getTocFilesForAddon(options.targetAddon)
+                .filter((file) => this.isBaseTocFile(file));
             if (filesToUpdate.length === 0) {
-                console.error(`❌ No .toc files found for addon: ${options.targetAddon}`);
+                console.error(`❌ No base .toc file found for addon: ${options.targetAddon}`);
+                console.error(`   Expected format: ${options.targetAddon}.toc`);
                 return;
             }
 
@@ -271,8 +274,13 @@ export class VersionBumper {
         console.log("=".repeat(60));
 
         for (const [addonName, files] of addonGroups) {
+            const baseFiles = files.filter((file) => this.isBaseTocFile(file));
+            if (baseFiles.length === 0) {
+                console.warn(`  ⚠️  Skipping ${addonName}: no base TOC file found (expected ${addonName}.toc)`);
+                continue;
+            }
             console.log(`\n📦 ${addonName}:`);
-            this.updateInterfaceFiles(files, options);
+            this.updateInterfaceFiles(baseFiles, options);
         }
     }
 
@@ -366,5 +374,16 @@ export class VersionBumper {
             return normalized.slice(cwd.length + 1);
         }
         return normalized;
+    }
+
+    /**
+     * Returns true only for base TOC files in the form <addonName>.toc.
+     *
+     * Flavored TOCs like <addonName>-something.toc are intentionally excluded.
+     */
+    private isBaseTocFile(file: TocFile): boolean {
+        const normalizedPath = file.path.replace(/\\/g, "/");
+        const fileName = normalizedPath.split("/").pop() ?? "";
+        return fileName.toLowerCase() === `${file.addonName}.toc`.toLowerCase();
     }
 }

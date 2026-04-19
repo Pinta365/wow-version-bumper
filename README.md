@@ -112,10 +112,10 @@ deno task bump all --minor
 #### TOC Interface Updates
 
 ```bash
-# Add one interface value to the existing list for current addon or all addons
+# Add one interface value to the base TOC for current addon or all addons
 deno task interface 120005
 
-# Add multiple interface values
+# Add multiple interface values to base TOC files only
 deno task interface 120005,120007
 
 # Target a specific addon in config mode
@@ -129,6 +129,8 @@ deno task interface 120005 --dry
 ```
 
 Default behavior appends missing interface values and keeps existing ones.
+Interface updates target only base TOC files in the format `<foldername>.toc`.
+Flavored TOCs such as `<foldername>-something.toc` are intentionally skipped.
 Use `--overwrite` to replace the entire `## Interface:` list.
 
 ## Addon-Local Setup (Recommended)
