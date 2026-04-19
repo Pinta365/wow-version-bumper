@@ -1,4 +1,4 @@
-import type { VersionBumpOptions } from "./types.ts";
+import type { InterfaceUpdateOptions, VersionBumpOptions } from "./types.ts";
 import { VersionBumper } from "./version-bumper.ts";
 
 /**
@@ -33,6 +33,8 @@ export class CLI {
         console.log("  deno task bump [addon] --dry                - Dry run (no changes)");
         console.log("  deno task bump [addon] --verbose            - Verbose output");
         console.log("  deno task bump patch|minor|major            - Bump current addon by bump type");
+        console.log("  deno task interface <interface> [addon]     - Add interface value(s)");
+        console.log("  deno task interface <values> [addon] --overwrite - Replace interface list");
 
         console.log("\nExamples:");
         console.log("  deno task show");
@@ -47,6 +49,8 @@ export class CLI {
         console.log("  deno task bump all --minor");
         console.log("  deno task bump patch");
         console.log("  deno task bump patch --dry");
+        console.log("  deno task interface 120005");
+        console.log("  deno task interface 120001,120005 YourAddonName --overwrite");
     }
 
     /**
@@ -130,6 +134,46 @@ export class CLI {
     }
 
     /**
+     * Parses interface command arguments and returns options.
+     */
+    private parseInterfaceArgs(args: string[]): InterfaceUpdateOptions {
+        const positionalArgs = args.filter((arg) => !arg.startsWith("--"));
+        if (positionalArgs.length === 0) {
+            throw new Error("Missing interface value(s). Example: deno task interface 120005 [addon]");
+        }
+
+        const interfaceInput = positionalArgs[0];
+        const targetAddonArg = positionalArgs[1];
+        const targetAddon = targetAddonArg === "all" ? undefined : targetAddonArg;
+        const overwrite = args.includes("--overwrite");
+        const dryRun = args.includes("--dry");
+        const verbose = args.includes("--verbose");
+
+        const interfaces = interfaceInput
+            .split(",")
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0);
+
+        if (interfaces.length === 0) {
+            throw new Error("No interface values provided");
+        }
+
+        for (const value of interfaces) {
+            if (!/^\d+$/.test(value)) {
+                throw new Error(`Invalid interface value: ${value}. Expected numeric values like 120005`);
+            }
+        }
+
+        return {
+            interfaces,
+            overwrite,
+            dryRun,
+            targetAddon,
+            verbose,
+        };
+    }
+
+    /**
      * Executes the main CLI logic based on command line arguments.
      *
      * @param args - Command line arguments
@@ -159,9 +203,15 @@ export class CLI {
                     this.bumper = new VersionBumper(true);
                 }
                 await this.bumper.bumpVersion(options);
+            } else if (command === "interface") {
+                const options = this.parseInterfaceArgs(args.slice(1));
+                if (options.verbose) {
+                    this.bumper = new VersionBumper(true);
+                }
+                this.bumper.updateInterface(options);
             } else {
                 console.error(
-                    "❌ Unknown command. Use 'show', 'list', 'whitelist', 'config', or 'bump'",
+                    "❌ Unknown command. Use 'show', 'list', 'whitelist', 'config', 'bump', or 'interface'",
                 );
             }
         } catch (error) {

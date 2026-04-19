@@ -17,6 +17,8 @@ import { CLI } from "./src/cli.ts";
  * - `bump [addon] --major/minor/patch` - Bump specific addon
  * - `bump [addon] --dry` - Dry run mode
  * - `bump [addon] --verbose` - Verbose output mode
+ * - `interface <value> [addon]` - Add interface value(s)
+ * - `interface <values> [addon] --overwrite` - Replace interface list
  */
 async function main() {
     const verbose = Deno.args.includes("--verbose");

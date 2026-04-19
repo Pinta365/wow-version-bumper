@@ -16,7 +16,8 @@
         "whitelist": "deno run --allow-read ./main.ts whitelist",
         "config": "deno run --allow-read ./main.ts config",
         "show": "deno run --allow-read --allow-run=git ./main.ts show",
-        "bump": "deno run --allow-read --allow-write --allow-run=git ./main.ts bump"
+        "bump": "deno run --allow-read --allow-write --allow-run=git ./main.ts bump",
+        "interface": "deno run --allow-read --allow-write --allow-run=git ./main.ts interface"
     },
     "imports": {
         "@std/semver": "jsr:@std/semver@^1.0.5"

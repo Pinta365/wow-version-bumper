@@ -33,6 +33,22 @@ export interface VersionBumpOptions {
 }
 
 /**
+ * Options for TOC Interface updates.
+ */
+export interface InterfaceUpdateOptions {
+    /** One or more interface values to apply */
+    interfaces: string[];
+    /** Whether to replace the full list instead of appending */
+    overwrite: boolean;
+    /** Whether to perform a dry run (no actual changes) */
+    dryRun: boolean;
+    /** Optional target addon name */
+    targetAddon?: string;
+    /** Whether to enable verbose output */
+    verbose?: boolean;
+}
+
+/**
  * Configuration settings for the version bumper.
  */
 export interface Config {

@@ -1,4 +1,4 @@
-import type { TocFile, VersionBumpOptions } from "./types.ts";
+import type { InterfaceUpdateOptions, TocFile, VersionBumpOptions } from "./types.ts";
 import { ConfigManager } from "./config.ts";
 import { TocManager } from "./toc-manager.ts";
 import { VersionManager } from "./version-manager.ts";
@@ -230,6 +230,53 @@ export class VersionBumper {
     }
 
     /**
+     * Updates TOC Interface values in targeted addon files.
+     */
+    public updateInterface(options: InterfaceUpdateOptions): void {
+        if (!options.targetAddon && this.isLocalMode()) {
+            const addonNames = [...new Set(this.tocManager.getTocFiles().map((file) => file.addonName))];
+            if (addonNames.length > 1) {
+                console.error("❌ Multiple addons detected in local mode.");
+                console.error(`   Found: ${addonNames.join(", ")}`);
+                console.error("   Specify a target addon explicitly: deno task interface <interface> <addon>");
+                return;
+            }
+        }
+
+        if (options.targetAddon) {
+            const filesToUpdate = this.tocManager.getTocFilesForAddon(options.targetAddon);
+            if (filesToUpdate.length === 0) {
+                console.error(`❌ No .toc files found for addon: ${options.targetAddon}`);
+                return;
+            }
+
+            const action = options.overwrite ? "Overwriting" : "Adding";
+            console.log(`\n${action} interface values for ${options.targetAddon}: ${options.interfaces.join(", ")}`);
+            console.log("=".repeat(60));
+            this.updateInterfaceFiles(filesToUpdate, options);
+            return;
+        }
+
+        const allTocFiles = this.tocManager.getTocFiles();
+        const addonGroups = new Map<string, TocFile[]>();
+        for (const file of allTocFiles) {
+            if (!addonGroups.has(file.addonName)) {
+                addonGroups.set(file.addonName, []);
+            }
+            addonGroups.get(file.addonName)!.push(file);
+        }
+
+        const action = options.overwrite ? "Overwriting" : "Adding";
+        console.log(`\n${action} interface values for all addons: ${options.interfaces.join(", ")}`);
+        console.log("=".repeat(60));
+
+        for (const [addonName, files] of addonGroups) {
+            console.log(`\n📦 ${addonName}:`);
+            this.updateInterfaceFiles(files, options);
+        }
+    }
+
+    /**
      * Updates version numbers in a list of TOC files.
      *
      * @param files - Array of TOC files to update
@@ -262,6 +309,49 @@ export class VersionBumper {
                         `  ❌ Failed to update ${relativePath}: ${(error as Error).message}`,
                     );
                 }
+            }
+        }
+    }
+
+    /**
+     * Updates interface values in a list of TOC files.
+     */
+    private updateInterfaceFiles(files: TocFile[], options: InterfaceUpdateOptions): void {
+        if (options.dryRun) {
+            console.log("🔍 DRY RUN MODE - No files will be modified");
+        }
+
+        for (const file of files) {
+            const relativePath = this.toRelativePath(file.path);
+
+            try {
+                const currentInterfaces = this.tocManager.getInterfacesFromContent(file.content);
+                if (currentInterfaces.length === 0) {
+                    console.warn(`  ⚠️  Skipping ${relativePath}: no ## Interface line found`);
+                    continue;
+                }
+
+                const nextInterfaces = options.overwrite
+                    ? this.tocManager.normalizeInterfaceValues(options.interfaces.join(","))
+                    : this.tocManager.normalizeInterfaceValues([...currentInterfaces, ...options.interfaces].join(","));
+
+                const oldValue = currentInterfaces.join(", ");
+                const newValue = nextInterfaces.join(", ");
+                const newContent = this.tocManager.updateInterfaceInContent(file.content, nextInterfaces);
+
+                if (oldValue === newValue) {
+                    console.log(`  ℹ️  No change ${relativePath}: ${oldValue}`);
+                    continue;
+                }
+
+                if (options.dryRun) {
+                    console.log(`  ${relativePath}: ${oldValue} → ${newValue}`);
+                } else {
+                    Deno.writeTextFileSync(file.path, newContent);
+                    console.log(`  ✅ Updated ${relativePath}: ${oldValue} → ${newValue}`);
+                }
+            } catch (error) {
+                console.error(`  ❌ Failed to update ${relativePath}: ${(error as Error).message}`);
             }
         }
     }

@@ -7,6 +7,7 @@ import type { ConfigManager } from "./config.ts";
 export class TocManager {
     private tocFiles: TocFile[] = [];
     private readonly tocPattern = /^## Version: (.+)$/m;
+    private readonly tocInterfacePattern = /^## Interface:\s*(.+)$/m;
     private readonly tocNamePattern = /^## Name: (.+)$/m;
     private configManager: ConfigManager;
     private verbose: boolean;
@@ -256,6 +257,54 @@ export class TocManager {
      */
     public updateVersionInContent(content: string, newVersion: string): string {
         return content.replace(this.tocPattern, `## Version: ${newVersion}`);
+    }
+
+    /**
+     * Extracts interface values from TOC content.
+     */
+    public getInterfacesFromContent(content: string): string[] {
+        const match = content.match(this.tocInterfacePattern);
+        if (!match) {
+            return [];
+        }
+
+        return this.normalizeInterfaceValues(match[1]);
+    }
+
+    /**
+     * Replaces the TOC interface line with the provided values.
+     */
+    public updateInterfaceInContent(content: string, interfaces: string[]): string {
+        const normalized = this.normalizeInterfaceValues(interfaces.join(","));
+        const nextInterfaceValue = normalized.join(", ");
+
+        if (!this.tocInterfacePattern.test(content)) {
+            throw new Error("No ## Interface line found");
+        }
+
+        return content.replace(this.tocInterfacePattern, `## Interface: ${nextInterfaceValue}`);
+    }
+
+    /**
+     * Normalizes interface values by trimming and de-duplicating while preserving order.
+     */
+    public normalizeInterfaceValues(input: string): string[] {
+        const parts = input
+            .split(",")
+            .map((value) => value.trim())
+            .filter((value) => value.length > 0);
+
+        const normalized: string[] = [];
+        for (const value of parts) {
+            if (!/^\d+$/.test(value)) {
+                throw new Error(`Invalid interface value: ${value}`);
+            }
+            if (!normalized.includes(value)) {
+                normalized.push(value);
+            }
+        }
+
+        return normalized;
     }
 
     /**

@@ -55,6 +55,12 @@ deno task config
 
 # Show current versions of all addons
 deno task show
+
+# Add interface value(s) to TOC Interface list
+deno task interface 120005
+
+# Replace Interface list entirely
+deno task interface 120001,120005 --overwrite
 ```
 
 > **Note**: By default, all bump operations include git integration (commit, tag, and push). Use `--dry` flag to preview changes without making any
@@ -102,6 +108,28 @@ deno task bump all --minor
 
 # Dry run - preview changes without writing files or git operations use the --dry flag
 ```
+
+#### TOC Interface Updates
+
+```bash
+# Add one interface value to the existing list for current addon or all addons
+deno task interface 120005
+
+# Add multiple interface values
+deno task interface 120005,120007
+
+# Target a specific addon in config mode
+deno task interface 120005 YourAddonName
+
+# Replace the entire interface list (overwrite mode)
+deno task interface 120001,120005 YourAddonName --overwrite
+
+# Dry run to preview changes only
+deno task interface 120005 --dry
+```
+
+Default behavior appends missing interface values and keeps existing ones.
+Use `--overwrite` to replace the entire `## Interface:` list.
 
 ## Addon-Local Setup (Recommended)
 
