@@ -11,6 +11,58 @@ export class GitManager {
     }
 
     /**
+     * Stages and commits specific files without creating tags or pushing.
+     */
+    public async stageAndCommitFiles(
+        filePaths: string[],
+        commitMessage: string,
+        targetAddon?: string,
+        dryRun?: boolean,
+    ): Promise<void> {
+        if (filePaths.length === 0) {
+            console.log("ℹ️  No TOC changes detected. Skipping commit step.");
+            return;
+        }
+
+        const uniqueFilePaths = [...new Set(filePaths)];
+
+        if (dryRun) {
+            console.log(`\n📝 Would stage and commit ${uniqueFilePaths.length} TOC file(s):`);
+            for (const filePath of uniqueFilePaths) {
+                console.log(`  - ${filePath.replace(/\\/g, "/")}`);
+            }
+            console.log(`📝 Would commit with message: ${commitMessage}`);
+            return;
+        }
+
+        try {
+            const workingDir = this.configManager.getWorkingDirectory(targetAddon);
+
+            if (!(await this.hasGitRepository(workingDir))) {
+                console.log("ℹ️  No git repository detected. Skipping interface commit step.");
+                return;
+            }
+
+            const gitPaths = uniqueFilePaths.map((filePath) => this.toGitRelativePath(filePath, workingDir));
+
+            console.log("\n📝 Staging updated TOC file(s)...");
+            await this.runGitArgsInDir(["add", "--", ...gitPaths], workingDir);
+
+            const staged = await this.runGitArgsInDir(["diff", "--cached", "--name-only"], workingDir);
+            if (!staged.trim()) {
+                console.log("ℹ️  No staged TOC changes to commit.");
+                return;
+            }
+
+            console.log("📝 Creating commit...");
+            await this.runGitArgsInDir(["commit", "-m", commitMessage], workingDir);
+            console.log("✅ Interface TOC changes committed (not pushed).");
+        } catch (error) {
+            console.error(`❌ Git commit step failed: ${(error as Error).message}`);
+        }
+    }
+
+    /**
      * Creates a git tag for the version bump operation.
      *
      * Performs git operations including committing changes, creating tags,
@@ -153,5 +205,39 @@ export class GitManager {
         }
 
         return output;
+    }
+
+    /**
+     * Executes a git command using argument arrays to preserve spacing and quoting.
+     */
+    private async runGitArgsInDir(args: string[], workingDir: string): Promise<string> {
+        const process = new Deno.Command("git", {
+            args,
+            cwd: workingDir,
+            stdout: "piped",
+            stderr: "piped",
+        });
+
+        const { code, stdout, stderr } = await process.output();
+        const output = new TextDecoder().decode(stdout);
+        const error = new TextDecoder().decode(stderr);
+
+        if (code !== 0) {
+            throw new Error(`Command failed: git ${args.join(" ")}\nError: ${error}`);
+        }
+
+        return output;
+    }
+
+    /**
+     * Converts absolute file paths to paths relative to the working directory for git add.
+     */
+    private toGitRelativePath(filePath: string, workingDir: string): string {
+        const normalizedPath = filePath.replace(/\\/g, "/");
+        const normalizedWorkingDir = workingDir.replace(/\\/g, "/").replace(/\/$/, "");
+        if (normalizedPath.toLowerCase().startsWith(`${normalizedWorkingDir.toLowerCase()}/`)) {
+            return normalizedPath.slice(normalizedWorkingDir.length + 1);
+        }
+        return normalizedPath;
     }
 }

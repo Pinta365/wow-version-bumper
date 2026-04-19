@@ -124,6 +124,9 @@ deno task interface 120005 YourAddonName
 # Replace the entire interface list (overwrite mode)
 deno task interface 120001,120005 YourAddonName --overwrite
 
+# Stage and commit changed base TOC file(s) without pushing
+deno task interface 120005 YourAddonName --commit
+
 # Dry run to preview changes only
 deno task interface 120005 --dry
 ```
@@ -132,6 +135,7 @@ Default behavior appends missing interface values and keeps existing ones.
 Interface updates target only base TOC files in the format `<foldername>.toc`.
 Flavored TOCs such as `<foldername>-something.toc` are intentionally skipped.
 Use `--overwrite` to replace the entire `## Interface:` list.
+Use `--commit` to stage and commit changed TOC files without pushing.
 
 ## Addon-Local Setup (Recommended)
 

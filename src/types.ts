@@ -42,6 +42,8 @@ export interface InterfaceUpdateOptions {
     overwrite: boolean;
     /** Whether to perform a dry run (no actual changes) */
     dryRun: boolean;
+    /** Whether to stage and commit changed TOC files */
+    commit: boolean;
     /** Optional target addon name */
     targetAddon?: string;
     /** Whether to enable verbose output */

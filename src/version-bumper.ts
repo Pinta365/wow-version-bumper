@@ -232,7 +232,7 @@ export class VersionBumper {
     /**
      * Updates TOC Interface values in targeted addon files.
      */
-    public updateInterface(options: InterfaceUpdateOptions): void {
+    public async updateInterface(options: InterfaceUpdateOptions): Promise<void> {
         if (!options.targetAddon && this.isLocalMode()) {
             const addonNames = [...new Set(this.tocManager.getTocFiles().map((file) => file.addonName))];
             if (addonNames.length > 1) {
@@ -256,7 +256,17 @@ export class VersionBumper {
             const action = options.overwrite ? "Overwriting" : "Adding";
             console.log(`\n${action} interface values for ${options.targetAddon}: ${options.interfaces.join(", ")}`);
             console.log("=".repeat(60));
-            this.updateInterfaceFiles(filesToUpdate, options);
+            const changedFiles = this.updateInterfaceFiles(filesToUpdate, options);
+
+            if (options.commit) {
+                const commitMessage = this.buildInterfaceCommitMessage(options.targetAddon, options);
+                await this.gitManager.stageAndCommitFiles(
+                    changedFiles,
+                    commitMessage,
+                    options.targetAddon,
+                    options.dryRun,
+                );
+            }
             return;
         }
 
@@ -280,7 +290,17 @@ export class VersionBumper {
                 continue;
             }
             console.log(`\n📦 ${addonName}:`);
-            this.updateInterfaceFiles(baseFiles, options);
+            const changedFiles = this.updateInterfaceFiles(baseFiles, options);
+
+            if (options.commit) {
+                const commitMessage = this.buildInterfaceCommitMessage(addonName, options);
+                await this.gitManager.stageAndCommitFiles(
+                    changedFiles,
+                    commitMessage,
+                    addonName,
+                    options.dryRun,
+                );
+            }
         }
     }
 
@@ -324,7 +344,9 @@ export class VersionBumper {
     /**
      * Updates interface values in a list of TOC files.
      */
-    private updateInterfaceFiles(files: TocFile[], options: InterfaceUpdateOptions): void {
+    private updateInterfaceFiles(files: TocFile[], options: InterfaceUpdateOptions): string[] {
+        const changedFiles: string[] = [];
+
         if (options.dryRun) {
             console.log("🔍 DRY RUN MODE - No files will be modified");
         }
@@ -354,14 +376,18 @@ export class VersionBumper {
 
                 if (options.dryRun) {
                     console.log(`  ${relativePath}: ${oldValue} → ${newValue}`);
+                    changedFiles.push(file.path);
                 } else {
                     Deno.writeTextFileSync(file.path, newContent);
                     console.log(`  ✅ Updated ${relativePath}: ${oldValue} → ${newValue}`);
+                    changedFiles.push(file.path);
                 }
             } catch (error) {
                 console.error(`  ❌ Failed to update ${relativePath}: ${(error as Error).message}`);
             }
         }
+
+        return changedFiles;
     }
 
     /**
@@ -385,5 +411,14 @@ export class VersionBumper {
         const normalizedPath = file.path.replace(/\\/g, "/");
         const fileName = normalizedPath.split("/").pop() ?? "";
         return fileName.toLowerCase() === `${file.addonName}.toc`.toLowerCase();
+    }
+
+    /**
+     * Builds a default commit message for interface updates.
+     */
+    private buildInterfaceCommitMessage(addonName: string, options: InterfaceUpdateOptions): string {
+        const verb = options.overwrite ? "Set" : "Update";
+        const values = options.interfaces.join(",");
+        return `${verb} ${addonName} interface to ${values}`;
     }
 }

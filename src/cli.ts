@@ -35,6 +35,7 @@ export class CLI {
         console.log("  deno task bump patch|minor|major            - Bump current addon by bump type");
         console.log("  deno task interface <interface> [addon]     - Add interface value(s)");
         console.log("  deno task interface <values> [addon] --overwrite - Replace interface list");
+        console.log("  deno task interface <values> [addon] --commit    - Stage and commit updated TOC file(s)");
 
         console.log("\nExamples:");
         console.log("  deno task show");
@@ -51,6 +52,7 @@ export class CLI {
         console.log("  deno task bump patch --dry");
         console.log("  deno task interface 120005");
         console.log("  deno task interface 120001,120005 YourAddonName --overwrite");
+        console.log("  deno task interface 120005 YourAddonName --commit");
     }
 
     /**
@@ -147,6 +149,7 @@ export class CLI {
         const targetAddon = targetAddonArg === "all" ? undefined : targetAddonArg;
         const overwrite = args.includes("--overwrite");
         const dryRun = args.includes("--dry");
+        const commit = args.includes("--commit");
         const verbose = args.includes("--verbose");
 
         const interfaces = interfaceInput
@@ -168,6 +171,7 @@ export class CLI {
             interfaces,
             overwrite,
             dryRun,
+            commit,
             targetAddon,
             verbose,
         };
@@ -208,7 +212,7 @@ export class CLI {
                 if (options.verbose) {
                     this.bumper = new VersionBumper(true);
                 }
-                this.bumper.updateInterface(options);
+                await this.bumper.updateInterface(options);
             } else {
                 console.error(
                     "❌ Unknown command. Use 'show', 'list', 'whitelist', 'config', 'bump', or 'interface'",
