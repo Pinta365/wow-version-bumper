@@ -4,7 +4,9 @@
         "Broker_TinyGuild",
         "KeystoneRoulette",
         "PintaGroupFinder",
-        "PintaWorldQuests"
+        "PintaWorldQuests",
+        "BreakSync",
+        "ToggleNamesResurrected"
     ],
     "addonsDirectory": "C:/World of Warcraft/_retail_/Interface/AddOns"
 }

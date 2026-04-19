@@ -1,6 +1,6 @@
 {
     "name": "@pinta365/toc-bumper",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "WoW Addon TOC Bumper - Manage version numbers across multiple .toc files",
     "exports": {
         ".": "./src/index.ts",
